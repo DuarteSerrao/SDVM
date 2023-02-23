@@ -33,14 +33,14 @@ int main(int argc, char** argv){
     int i, count;
     int *list = NULL;
     
-    if (argc < 2 || argc < (2+atoi(argv[1]))) return -1; // nome ficheiro, tamanho, array
+    if (argc < 2 ) return -1; // nome ficheiro, array
 
 
-    count = atoi(argv[1]);
+    count = argc - 1;
     list = (int *)malloc(count * sizeof(int));
 
     for(i=0;i<count;i++)
-       list[i] = atoi(argv[i+2]);
+       list[i] = atoi(argv[i+1]);
  
     quicksort(list,0,count-1);
  
