@@ -44,9 +44,5 @@ int main(int argc, char** argv){
  
     quicksort(list,0,count-1);
  
-    printf("Sorted elements: ");
-    for(i=0;i<count;i++)
-       printf(" %d",list[i]);
- 
     return 0;
 }
