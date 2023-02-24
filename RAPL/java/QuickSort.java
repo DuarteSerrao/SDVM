@@ -1,5 +1,3 @@
-import java.util.Scanner;
-
 public class QuickSort {
 
     static int[] arr = { 53, 30, 75, 5, 86, 66, 22, 12, 71, 17, 121, 119, 93, 55, 10, 69, 78, 16, 94, 102, 58, 81, 2,
