@@ -2,7 +2,7 @@
 
 main : main.c rapl.o
 	gcc -O2  -o main main.c rapl.o -lm
-	chmod +x main
+	chmod 777 main
 
 rapl.o : rapl.c rapl.h
 	gcc -O2  -c rapl.c  -lm

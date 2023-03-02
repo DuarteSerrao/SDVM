@@ -11,44 +11,12 @@
 #include <time.h>
 #include <math.h>
 #include "rapl.h"
-#include <raplcap/raplcap.h>
-#include <powercap/powercap.h>
 
 #define RUNTIME
 
 
-float parserTemp()
-{
-    char line[1000];
-    float temperature = 0.0;
-
-    FILE *fp = fopen("log.txt", "w+");
-    if (fp == NULL) {
-        printf("Erro ao abrir o arquivo.\n");
-        exit(1);
-    }
-
-    system("sensors > log.txt");
-
-    while (fgets(line, sizeof(line), fp)) {
-        if (sscanf(line, "Package id 0: +%fºC (high = +100.0°C, crit = +100.0°C)", &temperature) == 1) {
-            break;
-        }
-    }
-
-    fclose(fp);
-
-    printf("A temperatura da CPU é: +%.1f graus Celsius\n", temperature);
-
-    return temperature;
-}
-
-
 int main (int argc, char **argv) 
-
-
-{ 
-   char command[500],res[500];
+{ char command[500],res[500];
   int  ntimes = 1;
   int  core = 0;
   int  i=0;
@@ -64,7 +32,7 @@ int main (int argc, char **argv)
   FILE * fp;
 
   // printf("Program to be executed: %d",argc);
-  strcpy( command, "./" );
+  //strcpy( command, "./" );
  strcat(command,argv[1]);
  printf("Program to be executed: %s\n",argv[1]);
 
@@ -84,13 +52,11 @@ int main (int argc, char **argv)
   fp = fopen(res,"w");
   rapl_init(core);
 
-  fprintf(fp,"Program, Package , Core(s) , GPU , DRAM? , Time (milisec) \n");
+  fprintf(fp,"Program, Package , Core(s) , GPU , DRAM? , Time (sec) \n");
 
   
   for (i = 0 ; i < ntimes ; i++)
-    {   
-        while(parserTemp() > 60) sleep(1);
-                                          // sleep 1 second
+    {   sleep(1);                                    // sleep 1 second
         fprintf(fp,"%s , ",argv[1]);
         rapl_before(fp,core);
       
@@ -111,7 +77,7 @@ int main (int argc, char **argv)
 	rapl_after(fp,core);
 
 #ifdef RUNTIME	
-	fprintf(fp," %G \n",time_spent/1000);
+	fprintf(fp," %G \n",time_spent);
 #endif	
     }
     
