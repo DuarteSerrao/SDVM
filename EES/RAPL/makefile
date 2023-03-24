@@ -15,6 +15,7 @@ measure:
 	sudo RAPL/main "C/bubble" $(NTIMES)
 	sudo RAPL/main "java/quick" $(NTIMES)
 	sudo RAPL/main "java/bubble" $(NTIMES)
+	"Program, Package, Core(s), GPU, DRAM?, Time (milisec) " >> energy.csv
 	cat C/quick.J >> energy.csv
 	cat C/bubble.J >> energy.csv
 	cat java/quick.J >> energy.csv
