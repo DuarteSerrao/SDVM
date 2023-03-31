@@ -14,7 +14,7 @@ import Control.Monad.Trans.Maybe
 
 import Debug.Trace
 
-import Library.StrategicData
+import Library.StrategicData 
 
 
 gatherChildren (trav, untrav) z = maybe [] ((navigation:) . gatherChildrenR navigation) $ down' z 

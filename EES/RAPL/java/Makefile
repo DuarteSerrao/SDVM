@@ -13,25 +13,29 @@ compile:
 	echo '#!/usr/bin/java -jar' > bubble
 	cat bubble.jar >> bubble
 	chmod +x bubble
+	javac InsertionSort.java
+	jar -cvmf Insertion/manifest.txt insertion.jar InsertionSort.class
+	echo '#!/usr/bin/java -jar' > insertion
+	cat insertion.jar >> insertion
+	chmod +x insertion
+	rm -rf QuickSort.class BubbleSort.classInsertionSort.class
+	rm -rf quick.jar bubble.jar insertion.jar
 
 run:
 	./quick
 	./bubble
+	./insertion
 	
 measure: 
-	sudo ../RAPL/main "quick" $(NTIMES)
-	sudo ../RAPL/main "bubble" $(NTIMES)
+	sudo ../RAPL/main "Java" "quick" $(NTIMES)
+	sudo ../RAPL/main "Java" "bubble" $(NTIMES)
+	sudo ../RAPL/main "Java" "insertion" $(NTIMES)
 
 mem: 
 	{ /usr/bin/time -v quick > /dev/null; } 2>&1 | grep "Maximum resident" #| sed "s/[^0-9]\+\([0-9]\+\).*/\1/"
 	{ /usr/bin/time -v bubble > /dev/null; } 2>&1 | grep "Maximum resident" #| sed "s/[^0-9]\+\([0-9]\+\).*/\1/"
+	{ /usr/bin/time -v insertion > /dev/null; } 2>&1 | grep "Maximum resident" #| sed "s/[^0-9]\+\([0-9]\+\).*/\1/"
 
 clean:
-	rm -rf QuickSort.class
-	rm -rf BubbleSort.class
-	rm -rf quick.jar
-	rm -rf bubble.jar
-	rm -rf quick.J
-	rm -rf bubble.J
-	rm -rf quick
-	rm -rf bubble
+	rm -rf quick.J bubble.J insertion.J
+	rm -rf quick bubble insertion

@@ -559,7 +559,7 @@ void rapl_after(FILE * fp , int core)
   if (pp1_avail) {
      result=read_msr(fd,MSR_PP1_ENERGY_STATUS);
      pp1_after=(double)result*cpu_energy_units;
-     fprintf(fp,"%.6f , ",pp1_after-pp1_before);     // GPU
+     //fprintf(fp,"%.6f , ",pp1_after-pp1_before);     // GPU
   }
   else 
     fprintf(fp,"  , ");   
@@ -567,7 +567,7 @@ void rapl_after(FILE * fp , int core)
   if (dram_avail) {
      result=read_msr(fd,MSR_DRAM_ENERGY_STATUS);
      dram_after=(double)result*dram_energy_units;
-     fprintf(fp,"%.6f , ",dram_after-dram_before);     // DRAM
+     //fprintf(fp,"%.6f , ",dram_after-dram_before);     // DRAM
   }
   else
     fprintf(fp,"  , ");  

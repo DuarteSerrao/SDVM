@@ -2,9 +2,7 @@ NTIMES=10
 export NTIMES
 
 compile:
-	gcc -O2 -o bubble bubblesort.c
-	gcc -O2 -o insertion insertionsort.c
-	gcc -O2 -o quick quicksort.c
+	python3 bubblesort.py
 
 run:
 	./bubble

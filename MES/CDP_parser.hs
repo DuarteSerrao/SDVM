@@ -6,55 +6,66 @@
 --         a83630  - Duarte Serrão
 --         pg46542 - Pedro Melo
 --------------------------------------------------------------------------------
+module CDP where
+        
 import Prelude hiding (GT, LT)
 import Text.Parsec
 import Text.Parsec.String (Parser)
 import Data.List
--- A minha ling é constituída por uma lista de funções
 
+-- Um programa é constituido por um conjunto de funções
 data Prog = Prog [Fun]
         deriving (Show)
 
 
--- uma função é constutída por uma lista de statements
---  (falta  a lista de parametros formais)
-
-
+-- Uma função é constítuida pelo tipo, nome, lista de argumentos e lista de statments
 data Fun = Fun Type String [String] [Stat]
         deriving (Show)
 
 
--- considero os seguintes stats:
---  if then else
--- attrinutição
--- decl
--- loop - while
-
+-- Statments podem ser:
+    -- If then else
+    -- Atribuições
+    -- Declarações
+    -- Loops:
+        -- While
 data Stat = IFT Exp  [Stat] [Stat]
-        | Assign String Exp
-        | Decl   Type String -- Exp     --- int a = 33;
-        | While  Exp [Stat]
-        deriving (Show)
+          | Assign String Exp
+          | Decl   Type String -- Exp     --- int a = 33;
+          | While  Exp [Stat]
+          deriving (Show)
 
--- só considero dois tipos
+-- Tipos podem ser:
+    -- Int
+    -- Char
 data Type = IntDenotation
           | CharDenotation
           deriving (Show)
 
--- as expressões são:
+-- Expressões podem ser:
+    -- Adição, Multiplicação
+    -- OR, AND, NOT
+    -- >, <, ==, =/=
+    -- Variáveis
+    -- Constantes
+    -- Chamadas de funções: foo (2+3,"aa")
 data Exp = Add Exp Exp
          | Mul Exp Exp
-         | Or  Exp Exp
+         | OR  Exp Exp
+         | AND Exp Exp
+         | NOT Exp
          | GT  Exp Exp
          | LT  Exp Exp
+         | EQU Exp Exp
+         | DIF Exp Exp
          | Var String
          | Const String
-         | FunCall String [Exp]    --  f (2+3,"aa")
+         | FunCall String [Exp]
+         | PAR Exp
          deriving (Show)
 
 
 
--- temos de fazer um parser
 
 parser :: String -> Either ParseError Prog
 parser = parse progParser ""
@@ -104,9 +115,13 @@ opParser :: Parser (Exp -> Exp -> Exp)
 opParser = spaces *>
            choice [try (Add <$ char '+'),
                    try (Mul <$ char '*'), 
-                   try(Or <$ string "||"), 
-                   try(GT <$ char '>'),
-                   try(GT <$ char '<')]
+                   try(OR   <$ string "||"), 
+                   try(AND  <$ string "&&"), 
+                   try(GT   <$ char '>'),
+                   try(LT   <$ char '<'),
+                   try(EQU  <$ string "=="), 
+                   try(DIF  <$ string "!=")]
+                   
            <* optional (char '=')
            <* spaces
 
@@ -127,14 +142,14 @@ constParser :: Parser Exp
 constParser = Const <$> (spaces *> many1 digit <* spaces)
 
 parensExpParser :: Parser Exp
-parensExpParser = char '(' *> spaces *> expParser <* spaces <* char ')' <* spaces
+parensExpParser = PAR <$> (char '(' *> spaces *> expParser <* spaces <* char ')' <* spaces)
 -- e para o validarmos, escrever um unparser ??
 
 unparser :: Prog -> String
 unparser = unparseProg
 
 unparseProg :: Prog -> String
-unparseProg (Prog funs) = unlines (map unparseFun funs)
+unparseProg (Prog funs) = unwords (map unparseFun funs)
 
 unparseArgs :: [String] -> String
 unparseArgs [] = " "
@@ -143,20 +158,20 @@ unparseArgs (h:t) = h ++ ", " ++ unparseArgs t
 
 
 unparseFun :: Fun -> String
-unparseFun (Fun tp name args stats) = unparseType(tp) ++ " " ++ name ++ " ("++ unparseArgs args  ++ ") {"++ unlines (map unparseStat stats) ++ "}"
+unparseFun (Fun tp name args stats) = unparseType(tp) ++ " " ++ name ++ " ("++ unparseArgs args  ++ ") {"++ unwords (map unparseStat stats) ++ "}"
 
 unparseStat :: Stat -> String
 unparseStat (IFT cond thens elses) =
-  "if (" ++ unparseExp cond ++ ") { " ++
-  unlines (map ("  " ++) (map unparseStat thens)) ++
-  "} else { " ++
-  unlines (map ("  " ++) (map unparseStat elses)) ++
+  "if (" ++ unparseExp cond ++ ") {" ++
+  unwords (map (" " ++) (map unparseStat thens)) ++
+  "} else {" ++
+  unwords (map (" " ++) (map unparseStat elses)) ++
   "}"
 unparseStat (Assign var val) = var ++ " = " ++ unparseExp val ++ ";"
 unparseStat (Decl ty var) = unparseType ty ++ " " ++ var ++ ";"
 unparseStat (While cond stats) =
-  "while (" ++ unparseExp cond ++ ") { " ++
-  unlines (map ("  " ++) (map unparseStat stats)) ++
+  "while (" ++ unparseExp cond ++ ") {" ++
+  unwords (map ("  " ++) (map unparseStat stats)) ++
   "}"
 
 unparseType :: Type -> String
@@ -166,12 +181,17 @@ unparseType CharDenotation = "char"
 unparseExp :: Exp -> String
 unparseExp (Add e1 e2) = unparseExp e1 ++ " + " ++ unparseExp e2
 unparseExp (Mul e1 e2) = unparseExp e1 ++ " * " ++ unparseExp e2
-unparseExp (Or e1 e2) = unparseExp e1 ++ " || " ++ unparseExp e2
+unparseExp (OR e1 e2) = unparseExp e1 ++ " || " ++ unparseExp e2
+unparseExp (AND e1 e2) = unparseExp e1 ++ " || " ++ unparseExp e2
+unparseExp (NOT e) = "! " ++ unparseExp e
 unparseExp (GT e1 e2) = unparseExp e1 ++ " > " ++ unparseExp e2
 unparseExp (LT e1 e2) = unparseExp e1 ++ " < " ++ unparseExp e2
+unparseExp (EQU e1 e2) = unparseExp e1 ++ " == " ++ unparseExp e2
+unparseExp (DIF e1 e2) = unparseExp e1 ++ " != " ++ unparseExp e2
 unparseExp (Var v) = v
 unparseExp (Const c) = c
 unparseExp (FunCall name args) = name ++ "(" ++ intercalate ", " (map unparseExp args) ++ ")"
+unparseExp (PAR e) = "( " ++ unparseExp e ++ " )"
 -- pretty printing
 
 
@@ -182,7 +202,7 @@ exampleProg = unlines
   , "  a = 0;"
   , "  while (a < 10) {"
   , "    if (a > 5) {"
-  , "      a = a + 1;"
+  , "      a = a + 1 * a;"
   , "    } else {"
   , "      a = (a + 2)*(a+1);"
   , "    }"
@@ -190,7 +210,10 @@ exampleProg = unlines
   , "}"
   ]
 
-test1 :: Either ParseError String
-test1 = case parser exampleProg of
+testParser :: Either ParseError Prog
+testParser = parser exampleProg
+
+testUnparser :: Either ParseError String
+testUnparser = case parser exampleProg of
         Left err -> Left err
         Right tree -> Right (unparser tree)
