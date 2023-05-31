@@ -6,7 +6,9 @@
 --         a83630  - Duarte Serrão
 --         pg46542 - Pedro Melo
 --------------------------------------------------------------------------------
-module CDP where
+module CDP (parser, unparser, Prog(Prog), Fun(Fun), Stat(IFT, Assign, Decl, While),
+            Type(IntDenotation, CharDenotation), 
+            Exp(Add, Mul, OR, AND, NOT, GT, LT, EQU, DIF, Var, Const, FunCall, PAR)) where
         
 import Prelude hiding (GT, LT)
 import Text.Parsec
@@ -143,7 +145,7 @@ constParser = Const <$> (spaces *> many1 digit <* spaces)
 
 parensExpParser :: Parser Exp
 parensExpParser = PAR <$> (char '(' *> spaces *> expParser <* spaces <* char ')' <* spaces)
--- e para o validarmos, escrever um unparser ??
+
 
 unparser :: Prog -> String
 unparser = unparseProg
