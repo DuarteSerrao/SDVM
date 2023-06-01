@@ -1,4 +1,4 @@
-module Generator(genExp) where
+module Generator(genProg) where
 
 import CDP
 import Test.QuickCheck.Gen
@@ -9,16 +9,35 @@ alphabet :: String
 alphabet = ['a' .. 'z']
 
 
+genName :: Gen String
+genName = listOf1 (elements alphabet)
+
+genNum :: Gen Int
+genNum = choose(1, 999)
+
+
+
+genProg :: Gen Prog
+genProg = Prog <$> resize 3 (listOf genFun)
+
+
+genFun :: Gen Fun
+genFun = Fun <$> genType <*> genName <*> resize 3 (listOf genName) <*> resize 3 (listOf genStat)
+
+genStat :: Gen Stat
+genStat = frequency[(1, genIFT), (10, genAssign),(10, genDecl), (1, genWhile)]
+    where
+        genIFT = IFT <$> genExp <*> resize 3 (listOf genStat) <*> resize 3 (listOf genStat)
+        genAssign = Assign <$> genName <*> genExp
+        genDecl = Decl <$> genType <*> genName
+        genWhile = While <$> genExp <*> resize 3 (listOf genStat)
+
 
 genType :: Gen Type
 genType = elements [IntDenotation, CharDenotation]
 
 
-genName :: Gen String
-genName = vectorOf 3 $ elements alphabet
 
-genNum :: Gen String
-genNum = resize 3 (listOf $ elements ['0'..'9'])
 
 
 genExp :: Gen Exp
@@ -43,18 +62,3 @@ genExp = frequency[(1, genAdd), (1, genMul),(1, genOr),
         genPar = PAR <$> genExp
         
 
-
---data Exp = Add Exp Exp
---         | Mul Exp Exp
---         | OR  Exp Exp
---         | AND Exp Exp
---         | NOT Exp
---         | GT  Exp Exp
---         | LT  Exp Exp
---         | EQU Exp Exp
---         | DIF Exp Exp
---         | Var String
---         | Const String
---         | FunCall String [Exp]
---         | PAR Exp
---         deriving (Show)

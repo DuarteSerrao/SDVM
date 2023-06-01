@@ -1,8 +1,8 @@
 module Main where
 
-import Generator (genExp)
+import Generator (genProg)
 import Test.QuickCheck.Gen(sample)
 
 
 main :: IO ()
-main = sample genExp
+main = sample genProg

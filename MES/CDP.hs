@@ -61,7 +61,7 @@ data Exp = Add Exp Exp
          | EQU Exp Exp
          | DIF Exp Exp
          | Var String
-         | Const String
+         | Const Int
          | FunCall String [Exp]
          | PAR Exp
          deriving (Show)
@@ -141,7 +141,7 @@ varParser :: Parser Exp
 varParser = Var <$> idParser
 
 constParser :: Parser Exp
-constParser = Const <$> (spaces *> many1 digit <* spaces)
+constParser = Const <$> (spaces *> (read <$> (many1 digit)) <* spaces)
 
 parensExpParser :: Parser Exp
 parensExpParser = PAR <$> (char '(' *> spaces *> expParser <* spaces <* char ')' <* spaces)
@@ -191,7 +191,7 @@ unparseExp (LT e1 e2) = unparseExp e1 ++ " < " ++ unparseExp e2
 unparseExp (EQU e1 e2) = unparseExp e1 ++ " == " ++ unparseExp e2
 unparseExp (DIF e1 e2) = unparseExp e1 ++ " != " ++ unparseExp e2
 unparseExp (Var v) = v
-unparseExp (Const c) = c
+unparseExp (Const c) = show c
 unparseExp (FunCall name args) = name ++ "(" ++ intercalate ", " (map unparseExp args) ++ ")"
 unparseExp (PAR e) = "( " ++ unparseExp e ++ " )"
 -- pretty printing
