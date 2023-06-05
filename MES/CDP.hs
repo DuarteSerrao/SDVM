@@ -8,7 +8,7 @@
 --------------------------------------------------------------------------------
 module CDP (parser, unparser, Prog(Prog), Fun(Fun), Stat(IFT, Assign, Decl, While),
             Type(IntDenotation, CharDenotation), 
-            Exp(Add, Mul, OR, AND, NOT, GT, LT, EQU, DIF, Var, Const, FunCall, PAR)) where
+            Exp(Add, Mul, OR, AND, NOT, GT, LT, EQU, DIF, Var, Const, FunCall), exampleProg) where
         
 import Prelude hiding (GT, LT)
 import Text.Parsec
@@ -17,12 +17,12 @@ import Data.List
 
 -- Um programa é constituido por um conjunto de funções
 data Prog = Prog [Fun]
-        deriving (Show)
+        deriving (Show, Eq)
 
 
 -- Uma função é constítuida pelo tipo, nome, lista de argumentos e lista de statments
 data Fun = Fun Type String [String] [Stat]
-        deriving (Show)
+        deriving (Show, Eq)
 
 
 -- Statments podem ser:
@@ -35,14 +35,14 @@ data Stat = IFT Exp  [Stat] [Stat]
           | Assign String Exp
           | Decl   Type String -- Exp     --- int a = 33;
           | While  Exp [Stat]
-          deriving (Show)
+          deriving (Show, Eq)
 
 -- Tipos podem ser:
     -- Int
     -- Char
 data Type = IntDenotation
           | CharDenotation
-          deriving (Show)
+          deriving (Show, Eq)
 
 -- Expressões podem ser:
     -- Adição, Multiplicação
@@ -62,9 +62,8 @@ data Exp = Add Exp Exp
          | DIF Exp Exp
          | Var String
          | Const Int
-         | FunCall String [Exp]
-         | PAR Exp
-         deriving (Show)
+         | FunCall String [Exp] 
+         deriving (Show, Eq)
 
 
 
@@ -73,7 +72,7 @@ parser :: String -> Either ParseError Prog
 parser = parse progParser ""
 
 progParser :: Parser Prog
-progParser = Prog <$> many funParser
+progParser = Prog <$> sepBy funParser  (spaces)
 
 argsParser :: Parser [String]
 argsParser = sepBy1 idParser (char ',' *> spaces)
@@ -81,8 +80,8 @@ argsParser = sepBy1 idParser (char ',' *> spaces)
 funParser :: Parser Fun
 funParser = Fun <$> (typeParser <* spaces)
                  <*> idParser
-                 <*> (skipMany1 (char '(') *> spaces *> argsParser <* char ')' <* spaces <* char '{' <* spaces)
-                 <*> (many statParser)
+                 <*> (skipMany1 (char '(') *> spaces *> (option [] argsParser) <* char ')' <* spaces <* char '{' <* spaces)
+                 <*> (sepBy statParser (spaces))
                  <* spaces <* char '}'
 
 statParser :: Parser Stat
@@ -111,24 +110,54 @@ whileParser = While <$> (spaces *> string "while" *> spaces *> char '(' *> space
 
 
 expParser :: Parser Exp
-expParser = chainl1 atomParser opParser
+expParser =  choice[try atomParser, try opParser]
 
-opParser :: Parser (Exp -> Exp -> Exp)
+opParser :: Parser Exp
 opParser = spaces *>
-           choice [try (Add <$ char '+'),
-                   try (Mul <$ char '*'), 
-                   try(OR   <$ string "||"), 
-                   try(AND  <$ string "&&"), 
-                   try(GT   <$ char '>'),
-                   try(LT   <$ char '<'),
-                   try(EQU  <$ string "=="), 
-                   try(DIF  <$ string "!=")]
+           choice [try addParser,
+                   try mulParser, 
+                   try orParser, 
+                   try andParser, 
+                   try gtParser,
+                   try ltParser,
+                   try eqParser, 
+                   try difParser]
                    
            <* optional (char '=')
            <* spaces
 
+firstExpParser :: Parser Exp
+firstExpParser = char '(' *> spaces *> expParser <* spaces 
+
+secExpParser :: Parser Exp
+secExpParser = expParser <* spaces <* optional (char ')')
+
+addParser :: Parser Exp
+addParser = Add <$> firstExpParser <* char '+' <* spaces <*> secExpParser
+
+mulParser :: Parser Exp
+mulParser = Mul <$> firstExpParser <* char '*' <* spaces <*> secExpParser
+
+orParser :: Parser Exp
+orParser = OR <$> firstExpParser <* string "||" <* spaces <*> secExpParser
+
+andParser :: Parser Exp
+andParser = AND <$> firstExpParser <* string "&&" <* spaces <*> secExpParser
+
+eqParser :: Parser Exp
+eqParser = EQU <$> firstExpParser <* string "==" <* spaces <*> secExpParser
+
+difParser :: Parser Exp
+difParser = DIF <$> firstExpParser <* string "!=" <* spaces <*> secExpParser
+
+gtParser :: Parser Exp
+gtParser = GT <$> firstExpParser <* char '>' <* spaces <*> secExpParser
+
+ltParser :: Parser Exp
+ltParser = LT <$> firstExpParser <* char '<' <* spaces <*> secExpParser
+
 atomParser :: Parser Exp
-atomParser = choice [try funCallParser, try varParser, try constParser, try parensExpParser]
+atomParser = choice [try funCallParser, try varParser, try constParser, try notParser]--, try parensExpParser
 
 funCallParser :: Parser Exp
 funCallParser = FunCall <$> (spaces *> many1 letter <* spaces <* char '(' <* spaces)
@@ -141,10 +170,14 @@ varParser :: Parser Exp
 varParser = Var <$> idParser
 
 constParser :: Parser Exp
-constParser = Const <$> (spaces *> (read <$> (many1 digit)) <* spaces)
+constParser = Const <$> (spaces *> (read <$> numberParse) <* spaces)
 
-parensExpParser :: Parser Exp
-parensExpParser = PAR <$> (char '(' *> spaces *> expParser <* spaces <* char ')' <* spaces)
+numberParse :: Parser String
+numberParse = ((:) <$> (char '-') <*> (many1 digit)) <|>  many1 digit
+
+
+notParser :: Parser Exp
+notParser = NOT <$> (char '!' *> spaces *> expParser <* spaces)
 
 
 unparser :: Prog -> String
@@ -181,36 +214,27 @@ unparseType IntDenotation = "int"
 unparseType CharDenotation = "char"
 
 unparseExp :: Exp -> String
-unparseExp (Add e1 e2) = unparseExp e1 ++ " + " ++ unparseExp e2
-unparseExp (Mul e1 e2) = unparseExp e1 ++ " * " ++ unparseExp e2
-unparseExp (OR e1 e2) = unparseExp e1 ++ " || " ++ unparseExp e2
-unparseExp (AND e1 e2) = unparseExp e1 ++ " || " ++ unparseExp e2
-unparseExp (NOT e) = "! " ++ unparseExp e
-unparseExp (GT e1 e2) = unparseExp e1 ++ " > " ++ unparseExp e2
-unparseExp (LT e1 e2) = unparseExp e1 ++ " < " ++ unparseExp e2
-unparseExp (EQU e1 e2) = unparseExp e1 ++ " == " ++ unparseExp e2
-unparseExp (DIF e1 e2) = unparseExp e1 ++ " != " ++ unparseExp e2
+unparseExp (Add e1 e2) = "(" ++ unparseExp e1 ++ " + " ++ unparseExp e2 ++ ")"
+unparseExp (Mul e1 e2) = "(" ++ unparseExp e1 ++ " * " ++ unparseExp e2 ++ ")"
+unparseExp (OR e1 e2) = "(" ++ unparseExp e1 ++ " || " ++ unparseExp e2 ++ ")"
+unparseExp (AND e1 e2) = "(" ++ unparseExp e1 ++ " && " ++ unparseExp e2 ++ ")"
+unparseExp (DIF e1 e2) = "(" ++ unparseExp e1 ++ " != " ++ unparseExp e2 ++ ")"
+unparseExp (GT e1 e2) = "(" ++ unparseExp e1 ++ " > " ++ unparseExp e2 ++ ")"
+unparseExp (LT e1 e2) = "(" ++ unparseExp e1 ++ " < " ++ unparseExp e2 ++ ")"
+unparseExp (EQU e1 e2) = "(" ++ unparseExp e1 ++ " == " ++ unparseExp e2 ++ ")"
+unparseExp (NOT e) = "!" ++ unparseExp e
 unparseExp (Var v) = v
 unparseExp (Const c) = show c
 unparseExp (FunCall name args) = name ++ "(" ++ intercalate ", " (map unparseExp args) ++ ")"
-unparseExp (PAR e) = "( " ++ unparseExp e ++ " )"
 -- pretty printing
 
 
 exampleProg :: String
-exampleProg = unlines
-  [ "int main( arg ) {"
-  , "  int a;"
-  , "  a = 0;"
-  , "  while (a < 10) {"
-  , "    if (a > 5) {"
-  , "      a = a + 1 * a;"
-  , "    } else {"
-  , "      a = (a + 2)*(a+1);"
-  , "    }"
-  , "  }"
-  , "}"
-  ]
+exampleProg = "int main ( ) {int a; a = 0; while (a < 10) {  if (a > 5) { a = a + 1 * a;} else { a = ( a + 2 ) * ( a + 1 );}}}"
+
+exampleTree = Prog [Fun CharDenotation "sf" [] [],Fun IntDenotation "z" ["zc","w","qb"] [IFT (AND (Var "qk") (FunCall "lbj" [NOT (AND (Mul (Const (-1)) (Var "r")) (Const (-1)))])) [Decl IntDenotation "bc"] [Decl CharDenotation "rye",Decl CharDenotation "th",Assign "mfd" (Add (LT (Const 3) (Const 0)) (Add (Var "nt") (Mul (Var "wz") (DIF (NOT (NOT (FunCall "t" []))) (NOT (Const 2))))))],Assign "aug" (Var "an"),Assign "mjb" (Var "q")]]
+
+exampleTree2 = Prog [Fun CharDenotation "s" ["qt","d"] [IFT (Const (-1)) [Decl IntDenotation "du"] []]]
 
 testParser :: Either ParseError Prog
 testParser = parser exampleProg
@@ -219,3 +243,7 @@ testUnparser :: Either ParseError String
 testUnparser = case parser exampleProg of
         Left err -> Left err
         Right tree -> Right (unparser tree)
+
+testTree = unparser exampleTree
+
+testBoth = parser testTree

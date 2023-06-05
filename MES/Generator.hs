@@ -1,9 +1,20 @@
+--------------------------------------------------------------------------------
+-- Universidade do Minho
+-- Mestrado em Engenharia Informática
+-- Perfil SDVM - Manutenção e Evolução de Software
+-- ALUNOS: pg50289 - Catarina Martins
+--         a83630  - Duarte Serrão
+--         pg46542 - Pedro Melo
+--------------------------------------------------------------------------------
 module Generator(genProg) where
 
 import CDP
 import Test.QuickCheck.Gen
 import Test.QuickCheck.Arbitrary
 import Prelude hiding (GT, LT)
+
+instance Arbitrary Prog where
+        arbitrary = genProg
 
 alphabet :: String
 alphabet = ['a' .. 'z']
@@ -13,8 +24,7 @@ genName :: Gen String
 genName = listOf1 (elements alphabet)
 
 genNum :: Gen Int
-genNum = choose(1, 999)
-
+genNum = arbitrary
 
 
 genProg :: Gen Prog
@@ -38,14 +48,13 @@ genType = elements [IntDenotation, CharDenotation]
 
 
 
-
-
 genExp :: Gen Exp
 genExp = frequency[(1, genAdd), (1, genMul),(1, genOr),
                    (1, genAnd), (1, genNot),  (1, genGT),
                    (1, genLT), (1, genEq), (1, genDif), 
-                   (10, genVar), (10, genConst), (1, genFun),
-                   (1, genPar)]
+                   (10, genVar), (10, genConst), (1, genFun)
+                   --(1, genPar)
+                   ]
     where
         genAdd = Add <$> genExp <*> genExp 
         genMul = Mul <$> genExp <*> genExp 
@@ -59,6 +68,5 @@ genExp = frequency[(1, genAdd), (1, genMul),(1, genOr),
         genVar = Var <$> genName
         genConst = Const <$> genNum
         genFun =  FunCall <$> genName <*> resize 3 (listOf genExp)
-        genPar = PAR <$> genExp
         
 

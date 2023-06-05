@@ -18,7 +18,7 @@ extra-source-files:  CHANGELOG.md
 
 executable MES
   main-is:             Main.hs
-  other-modules:       CDP, Generator
+  other-modules:       CDP, Generator, Properties
   -- other-extensions:
   build-depends:       base >=4.14 && <4.15, parsec >= 3.1.14.0, QuickCheck>= 2.14.2
   -- hs-source-dirs:
