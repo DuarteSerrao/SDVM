@@ -6,6 +6,7 @@
 --         a83630  - Duarte Serrão
 --         pg46542 - Pedro Melo
 --------------------------------------------------------------------------------
+{-# LANGUAGE DeriveDataTypeable #-}
 module CDP (parser, unparser, Prog(Prog), Fun(Fun), Stat(IFT, Assign, Decl, While),
             Type(IntDenotation, CharDenotation), 
             Exp(Add, Mul, OR, AND, NOT, GT, LT, EQU, DIF, Var, Const, FunCall), exampleProg) where
@@ -14,15 +15,16 @@ import Prelude hiding (GT, LT)
 import Text.Parsec
 import Text.Parsec.String (Parser)
 import Data.List
+import Data.Data
 
 -- Um programa é constituido por um conjunto de funções
 data Prog = Prog [Fun]
-        deriving (Show, Eq)
+        deriving (Show, Eq, Data, Typeable)
 
 
 -- Uma função é constítuida pelo tipo, nome, lista de argumentos e lista de statments
 data Fun = Fun Type String [String] [Stat]
-        deriving (Show, Eq)
+        deriving (Show, Eq, Data, Typeable)
 
 
 -- Statments podem ser:
@@ -35,14 +37,14 @@ data Stat = IFT Exp  [Stat] [Stat]
           | Assign String Exp
           | Decl   Type String -- Exp     --- int a = 33;
           | While  Exp [Stat]
-          deriving (Show, Eq)
+          deriving (Show, Eq, Data, Typeable)
 
 -- Tipos podem ser:
     -- Int
     -- Char
 data Type = IntDenotation
           | CharDenotation
-          deriving (Show, Eq)
+          deriving (Show, Eq, Data, Typeable)
 
 -- Expressões podem ser:
     -- Adição, Multiplicação
@@ -63,7 +65,7 @@ data Exp = Add Exp Exp
          | Var String
          | Const Int
          | FunCall String [Exp] 
-         deriving (Show, Eq)
+         deriving (Show, Eq, Data, Typeable)
 
 
 

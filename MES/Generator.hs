@@ -16,6 +16,9 @@ import Prelude hiding (GT, LT)
 instance Arbitrary Prog where
         arbitrary = genProg
 
+namesTaken :: [Gen String]
+namesTaken = []
+
 alphabet :: String
 alphabet = ['a' .. 'z']
 

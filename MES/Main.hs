@@ -11,7 +11,7 @@ module Main where
 import Properties
 import Test.QuickCheck.Gen(sample)
 import Test.QuickCheck
-
+import Optimize
 
 main :: IO ()
-main = quickCheck prop_parser
+main = quickCheck prop_opt_TDvsBU

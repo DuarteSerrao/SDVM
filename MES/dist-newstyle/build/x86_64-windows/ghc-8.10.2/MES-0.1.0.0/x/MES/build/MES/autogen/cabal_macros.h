@@ -44,6 +44,39 @@
   (major1) == 3 && (major2) == 1 && (minor) <= 14)
 #endif /* MIN_VERSION_parsec */
 
+/* package syb-0.7.2.3 */
+#ifndef VERSION_syb
+#define VERSION_syb "0.7.2.3"
+#endif /* VERSION_syb */
+#ifndef MIN_VERSION_syb
+#define MIN_VERSION_syb(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  7 || \
+  (major1) == 0 && (major2) == 7 && (minor) <= 2)
+#endif /* MIN_VERSION_syb */
+
+/* package syz-0.2.0.0 */
+#ifndef VERSION_syz
+#define VERSION_syz "0.2.0.0"
+#endif /* VERSION_syz */
+#ifndef MIN_VERSION_syz
+#define MIN_VERSION_syz(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  2 || \
+  (major1) == 0 && (major2) == 2 && (minor) <= 0)
+#endif /* MIN_VERSION_syz */
+
+/* package transformers-0.5.6.2 */
+#ifndef VERSION_transformers
+#define VERSION_transformers "0.5.6.2"
+#endif /* VERSION_transformers */
+#ifndef MIN_VERSION_transformers
+#define MIN_VERSION_transformers(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  5 || \
+  (major1) == 0 && (major2) == 5 && (minor) <= 6)
+#endif /* MIN_VERSION_transformers */
+
 /* tool gcc-9.2.0 */
 #ifndef TOOL_VERSION_gcc
 #define TOOL_VERSION_gcc "9.2.0"

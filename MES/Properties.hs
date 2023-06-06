@@ -10,9 +10,15 @@ module Properties where
 
 import CDP
 import Generator (genProg)
+import Optimize
 
 prop_parser ::  Prog -> Bool
 prop_parser prog = case parser (unparser prog) of
         Left err -> False
         Right tree -> prog == tree
 
+prop_opt_BUvsI ::  Prog -> Bool
+prop_opt_BUvsI prog = optProgBU prog == optProgI prog
+
+prop_opt_TDvsBU ::  Prog -> Bool
+prop_opt_TDvsBU prog = optProgTD prog == optProgBU prog
