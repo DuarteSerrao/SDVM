@@ -16,6 +16,7 @@ import Text.Parsec
 import Text.Parsec.String (Parser)
 import Data.List
 import Data.Data
+import Library.StrategicData (StrategicData)
 
 -- Um programa é constituido por um conjunto de funções
 data Prog = Prog [Fun]
@@ -68,6 +69,11 @@ data Exp = Add Exp Exp
          deriving (Show, Eq, Data, Typeable)
 
 
+instance StrategicData Prog
+instance StrategicData Fun
+instance StrategicData Stat
+instance StrategicData Type
+instance StrategicData Exp
 
 
 parser :: String -> Either ParseError Prog

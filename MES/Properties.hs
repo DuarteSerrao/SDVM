@@ -9,7 +9,6 @@
 module Properties where
 
 import CDP
-import Generator (genProg)
 import Optimize
 
 prop_parser ::  Prog -> Bool

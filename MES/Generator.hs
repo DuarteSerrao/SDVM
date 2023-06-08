@@ -12,11 +12,11 @@ import CDP
 import Test.QuickCheck.Gen
 import Test.QuickCheck.Arbitrary
 import Prelude hiding (GT, LT)
+import Control.Monad
 
 instance Arbitrary Prog where
         arbitrary = genProg
 
-namesTaken :: [Gen String]
 namesTaken = []
 
 alphabet :: String
@@ -35,15 +35,45 @@ genProg = Prog <$> resize 3 (listOf genFun)
 
 
 genFun :: Gen Fun
-genFun = Fun <$> genType <*> genName <*> resize 3 (listOf genName) <*> resize 3 (listOf genStat)
+genFun = do
+    funType  <- genType
+    funName  <- genName
+    funArgs  <- resize 3 (listOf genName)
+    numStats <- choose (0, 3)
+    funStats <- (genStat funArgs numStats [])
+    return (Fun funType funName funArgs funStats)
 
-genStat :: Gen Stat
-genStat = frequency[(1, genIFT), (10, genAssign),(10, genDecl), (1, genWhile)]
+genStat :: [String] -> Int ->  [Stat] -> Gen [Stat]
+genStat args 0 stats = pure stats
+genStat args numStats stats = 
+    do 
+        stat <- frequency[(1, genIFT), (10, genAssign),(10, genDecl), (1, genWhile)]
+        if (fst(getName stat))
+            then genStat (args++(snd(getName stat))) (numStats-1) (stats ++ [stat])
+            else genStat args (numStats-1) (stats ++ [stat])
     where
-        genIFT = IFT <$> genExp <*> resize 3 (listOf genStat) <*> resize 3 (listOf genStat)
-        genAssign = Assign <$> genName <*> genExp
+        getName (Decl _ name) = (True, [name])
+        getName _ = (False, [] )
+        genIFT = do
+            iftCond       <- genExp args
+            numStatsTrue  <- choose (0, 3)
+            numStatsFalse <- choose (0, 3)
+            iftStatsTrue  <- (genStat args numStatsTrue [])
+            iftStatsFalse <- (genStat args numStatsFalse [])
+            return (IFT iftCond iftStatsTrue iftStatsFalse)
+        genAssign = do
+            if (args == []) 
+                then do decl <- genDecl
+                        return decl
+                else do name <- elements args
+                        exp <- genExp args
+                        return (Assign name exp)
         genDecl = Decl <$> genType <*> genName
-        genWhile = While <$> genExp <*> resize 3 (listOf genStat)
+        genWhile = do
+            whCond   <- genExp args
+            numStats <- choose (0, 3)
+            whStats  <- (genStat args numStats [])
+            return (While whCond whStats)
 
 
 genType :: Gen Type
@@ -51,25 +81,29 @@ genType = elements [IntDenotation, CharDenotation]
 
 
 
-genExp :: Gen Exp
-genExp = frequency[(1, genAdd), (1, genMul),(1, genOr),
+genExp :: [String] -> Gen Exp
+genExp args = frequency[(1, genAdd), (1, genMul),(1, genOr),
                    (1, genAnd), (1, genNot),  (1, genGT),
                    (1, genLT), (1, genEq), (1, genDif), 
                    (10, genVar), (10, genConst), (1, genFun)
-                   --(1, genPar)
                    ]
     where
-        genAdd = Add <$> genExp <*> genExp 
-        genMul = Mul <$> genExp <*> genExp 
-        genOr = OR <$> genExp <*> genExp 
-        genAnd = AND <$> genExp <*> genExp 
-        genNot = NOT <$> genExp
-        genGT = GT <$> genExp <*> genExp 
-        genLT = LT <$> genExp <*> genExp 
-        genEq = EQU <$> genExp <*> genExp 
-        genDif = DIF <$> genExp <*> genExp 
-        genVar = Var <$> genName
+        genAdd = Add <$> (genExp args) <*> (genExp args) 
+        genMul = Mul <$> (genExp args) <*> (genExp args) 
+        genOr = OR <$> (genExp args) <*> (genExp args) 
+        genAnd = AND <$> (genExp args) <*> (genExp args) 
+        genNot = NOT <$> (genExp args)
+        genGT = GT <$> (genExp args) <*> (genExp args) 
+        genLT = LT <$> (genExp args) <*> (genExp args) 
+        genEq = EQU <$> (genExp args) <*> (genExp args) 
+        genDif = DIF <$> (genExp args) <*> (genExp args) 
+        genVar = do
+            if (args == []) 
+                then do const <- genConst
+                        return const
+                else do name <- elements args
+                        return (Var name)
         genConst = Const <$> genNum
-        genFun =  FunCall <$> genName <*> resize 3 (listOf genExp)
+        genFun =  FunCall <$> genName <*> resize 3 (listOf (genExp args))
         
 

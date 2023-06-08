@@ -10,16 +10,11 @@ module Optimize (optProgTD, optProgBU, optProgI) where
 
 import CDP
 import Library.Ztrategic
-import Library.StrategicData (StrategicData)
 import Data.Generics.Zipper
 import Data.Maybe
 import Prelude hiding (GT, LT)
 
-instance StrategicData Prog
-instance StrategicData Fun
-instance StrategicData Stat
-instance StrategicData Type
-instance StrategicData Exp
+
 
 
 optProgTD :: Prog -> Prog
